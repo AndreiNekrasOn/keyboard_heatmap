@@ -13,14 +13,24 @@ The keylogger only collects the number and the total time for each key, without 
 
 ## Build
 
-To build you need `libxi-dev, libx11-dev` installed.
+To build you need `libevdev` installed.
 
-`gcc x11_key_counter.c -o keylogger.out -lXi -lX11`
+`g++ linux_key_counter.cpp -o keylogger.out -l:libevdev.a`
+
+## Run
+
+Running the keylogger requires root privileges.
+
+`Usage: ./keylogger.out ./keylogger.out <path/to/device> KEY_<STOP>`
+
+- <path/to/device>: /dev/input/event<x>, to get the <x> see `ls -l /dev/input/by-path/`
+- KEY_<STOP>: key-press event that stops the program, for example KEY_F1
+
 
 ## Todo
 - [x] Keylogger for X server
-- [ ] Keylogger for Windows
-- [ ] Heat map generation from csv
+- [x] Keylogger for X and Wayland
+- [ ] Heat map generation from file
 - [ ] GUI: create keyboard layout
 - [ ] GUI: visualize the heat map
 
