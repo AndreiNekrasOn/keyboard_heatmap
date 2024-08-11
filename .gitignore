@@ -1,3 +1,4 @@
+# C and C++
 # Prerequisites
 *.d
 
@@ -50,3 +51,27 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# JAVA
+
+# Gradle
+.gradle/
+target/
+
+# Maven
+build/
+
+# Eclipse
+bin/
+
+# IntelliJ IDEA
+.idea/
+*.iml
+
+MacOS
+.DS_Store
+
+# Jdtls
+.classpath
+.project
+.settings/

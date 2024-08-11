@@ -6,16 +6,25 @@ Maybe you're a developer and you use the keyboard excessively for vimming. Maybe
 
 To address this, I created a program that combines a minimalistic keylogger and an interface to visualize its output. It will help you setup your keyboard shortcuts as even as possible. You just leave it running for a work-session or two, pass the aggregated data to the GUI and adjust your setup accordingly.
 
-There *will be* 2 components in this repository: the keylogger and the graphical application. 
+There are 2 components in this repository: the keylogger and the graphical application to display the result.
 
 P.S.
 The keylogger only collects the number and the total time for each key, without saving information about the order.
 
+If you don't trust the keylogger program, you can create a file "keylog.csv" yourself, the format is: evdev-keycode,number_of_presses,time_pressed
+
+![GUI](images/app.png)
+
 ## Build
 
-To build you need `libevdev` installed.
+To build the keylogger you need `libevdev` installed.
 
 `g++ linux_key_counter.cpp -o keylogger.out -l:libevdev.a`
+
+To build the GUI app you need java 17 and maven. Run this in ./gui directory:
+
+`maven clean javafx:run`
+
 
 ## Run
 
@@ -30,7 +39,8 @@ Running the keylogger requires root privileges.
 ## Todo
 - [x] Keylogger for X server
 - [x] Keylogger for X and Wayland
-- [ ] Heat map generation from file
-- [ ] GUI: create keyboard layout
-- [ ] GUI: visualize the heat map
+- [x] Heat map generation from file
+- [x] GUI: create keyboard layout
+- [x] GUI: visualize the heat map
+- [ ] Keylogger for Windows
 

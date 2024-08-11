@@ -8,7 +8,6 @@
 #include <string>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <thread>
 #include <unordered_map>
 #include <termios.h>
 
@@ -62,9 +61,8 @@ public:
 };
 
 ostream &operator<<(ostream &os, const KeyFrequency &kf) {
-    os << "\n" << kf.name << ": {\n\ttimes pressed: " << kf.numPresses <<
-        "\n\ttime hold: " << ((double) kf.totalPressTime) / 1e6 <<
-        " seconds\n},\n";
+    os << kf.name << "," << kf.numPresses << "," <<
+        ((double) kf.totalPressTime) / 1e6 << "\n";
     return os;
 }
 
@@ -118,10 +116,7 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Usage: ./keylogger.out <path/to/device> KEY_<STOP>");
         exit(1);
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-    cout << "Start...\n";
     hideInput();
-
     libevdev *dev = NULL;
     int rc = openDevice(&dev, argv[1]);
     auto keyFrequency = keyloggerLoop(dev, argv[2]);
