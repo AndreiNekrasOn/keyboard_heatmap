@@ -93,7 +93,7 @@ int play_sound(string music_filename) {
     if (pid == -1) {
         return -1;
     } else if (pid == 0) { // child
-        string cmd = "mpv " + music_filename + " > /dev/null";
+        string cmd = "pw-play " + music_filename + " > /dev/null";
         int result = system(cmd.c_str());
         if (result != 0) {
             std::cerr << "Error: Failed to play sound '" << music_filename << "'" << endl;
