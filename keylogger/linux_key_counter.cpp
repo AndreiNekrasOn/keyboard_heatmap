@@ -9,6 +9,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unordered_map>
+#include <unistd.h>
 #include <termios.h>
 
 #define key_code __u16
@@ -26,7 +27,7 @@ private:
     string name;
 
     timeval tv;
-    
+
     long getTime() {
         gettimeofday(&tv, NULL);
         return tv.tv_sec * 1e6 + tv.tv_usec ; // microseconds
@@ -38,7 +39,7 @@ public:
         numPresses = 0;
         totalPressTime = 0;
     }
-    
+
     void update(bool keyDown) {
         long updateTime = getTime();
         if (keyDown) {
@@ -52,7 +53,7 @@ public:
     time_t getTotalPressTime() {
         return totalPressTime;
     }
-    
+
     int getNumPresses() {
         return numPresses;
     }
@@ -86,6 +87,24 @@ int openDevice(libevdev **dev, const char *path) {
     return rc;
 }
 
+// play sound on linux using system() call
+int play_sound(string music_filename) {
+    pid_t pid = fork();
+    if (pid == -1) {
+        return -1;
+    } else if (pid == 0) { // child
+        string cmd = "mpv " + music_filename + " > /dev/null";
+        int result = system(cmd.c_str());
+        if (result != 0) {
+            std::cerr << "Error: Failed to play sound '" << music_filename << "'" << endl;
+            _exit(-1); // Return error code
+        }
+        _exit(0);
+    }
+    return pid;
+}
+
+
 std::unordered_map<key_code, KeyFrequency *> keyloggerLoop(libevdev *dev,
         string stopWord) {
     std::unordered_map<key_code, KeyFrequency *> keyFrequency;
@@ -106,7 +125,9 @@ std::unordered_map<key_code, KeyFrequency *> keyloggerLoop(libevdev *dev,
         } else {
             keyFrequency[ev.code]->update(ev.value != 0);
         }
-
+        if (ev.value != 0) {
+            play_sound("quack.opus");
+        }
     }
     return keyFrequency;
 }
@@ -120,7 +141,6 @@ int main(int argc, char *argv[]) {
     libevdev *dev = NULL;
     int rc = openDevice(&dev, argv[1]);
     auto keyFrequency = keyloggerLoop(dev, argv[2]);
-
     for (auto it : keyFrequency) {
         cout << *it.second;
     }
