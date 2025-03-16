@@ -1,18 +1,49 @@
 #include <ctime>
-#include <errno.h>
 #include <fcntl.h>
 #include <iostream>
-#include <libevdev-1.0/libevdev/libevdev.h>
 #include <stdlib.h>
 #include <string.h>
 #include <string>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unordered_map>
-#include <unistd.h>
-#include <termios.h>
 
-#define key_code __u16
+#define key_code unsigned long long
+
+#ifdef __unix__         
+#include <unistd.h>
+#include <libevdev-1.0/libevdev/libevdev.h>
+#include <termios.h>
+#elif defined(_WIN32) || defined(WIN32) 
+#define OS_Windows
+#include <windows.h>
+#include <winuser.h>
+// https://stackoverflow.com/a/26085827
+#include <stdint.h> // portable: uint64_t   MSVC: __int64 
+// MSVC defines this in winsock2.h!?
+int gettimeofday(struct timeval * tp, struct timezone * tzp)
+{
+    // Note: some broken versions only have 8 trailing zero's, the correct epoch has 9 trailing zero's
+    // This magic number is the number of 100 nanosecond intervals since January 1, 1601 (UTC)
+    // until 00:00:00 January 1, 1970 
+    static const uint64_t EPOCH = ((uint64_t) 116444736000000000ULL);
+
+    SYSTEMTIME  system_time;
+    FILETIME    file_time;
+    uint64_t    time;
+
+    GetSystemTime( &system_time );
+    SystemTimeToFileTime( &system_time, &file_time );
+    time =  ((uint64_t)file_time.dwLowDateTime )      ;
+    time += ((uint64_t)file_time.dwHighDateTime) << 32;
+
+    tp->tv_sec  = (long) ((time - EPOCH) / 10000000L);
+    tp->tv_usec = (long) (system_time.wMilliseconds * 1000);
+    return 0;
+}
+
+#define libevdev void
+#endif
 
 using std::cout;
 using std::endl;
@@ -68,14 +99,17 @@ ostream &operator<<(ostream &os, const KeyFrequency &kf) {
 }
 
 void hideInput() {
+    #ifdef  __unix__
     termios oldt;
     tcgetattr(1, &oldt);
     termios newt = oldt;
     newt.c_lflag &= ~ECHO;
     tcsetattr(1, TCSANOW, &newt);
+    #endif
 }
 
 int openDevice(libevdev **dev, const char *path) {
+    #ifdef __unix__
     int fd;
     int rc = 1;
     fd = open(path, O_RDONLY|O_NONBLOCK);
@@ -85,10 +119,13 @@ int openDevice(libevdev **dev, const char *path) {
         exit(1);
     }
     return rc;
+    #endif
+    return 0;
 }
 
 // play sound on linux using system() call
 int play_sound(string music_filename) {
+    #ifdef __unix__
     pid_t pid = fork();
     if (pid == -1) {
         return -1;
@@ -102,6 +139,8 @@ int play_sound(string music_filename) {
         _exit(0);
     }
     return pid;
+    #endif
+    return 0;
 }
 
 
@@ -109,7 +148,9 @@ std::unordered_map<key_code, KeyFrequency *> keyloggerLoop(libevdev *dev,
         string stopWord) {
     std::unordered_map<key_code, KeyFrequency *> keyFrequency;
     int rc = 0;
+    int i = 0;
     while (rc == 1 || rc == 0 || rc == -EAGAIN) {
+        #ifdef __unix__
         input_event ev;
         rc = libevdev_next_event(dev, LIBEVDEV_READ_FLAG_NORMAL, &ev);
         if (rc != 0 || ev.type != EV_KEY) {
@@ -128,6 +169,20 @@ std::unordered_map<key_code, KeyFrequency *> keyloggerLoop(libevdev *dev,
         if (ev.value != 0) {
             play_sound("quack.opus");
         }
+        #else
+        if (GetAsyncKeyState(VK_ESCAPE)) {
+            break; // Exit the loop if ESC is pressed
+        }
+        if (i > 100) {
+            break;
+        }
+        for (Key)
+            if (GetAsyncKeyState(key)) { // If the key is pressed
+                keyFrequency[key - 'A'] = new KeyFrequency("" + key); // wtf
+            }
+        }
+        Sleep(100);
+        #endif
     }
     return keyFrequency;
 }
